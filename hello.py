@@ -1,5 +1,7 @@
 from flask import Flask, escape, request, render_template
 import random
+import requests
+from bs4 import BeautifulSoup
 
 app = Flask(__name__)
 
@@ -102,6 +104,26 @@ def naver():
 @app.route('/google')
 def google():
     return render_template('google.html')
+
+@app.route('/summoner')
+def summoner():
+    return render_template('summoner.html')
+    
+@app.route('/opgg')
+def opgg():
+    username = request.args.get('username')
+    opgg_url = f'https://www.op.gg/summoner/userName={username}'
+
+
+    res = requests.get(opgg_url).text
+    soup = BeautifulSoup(res, 'html.parser')
+    
+    # print(soup)
+    
+    rank = soup.select_one('#SummonerLayoutContent > div.tabItem.Content.SummonerLayoutContent.summonerLayout-summary > div.SideContent > div.TierBox.Box > div > div.TierRankInfo > div.TierRank').text
+    win = soup.select_one('#SummonerLayoutContent > div.tabItem.Content.SummonerLayoutContent.summonerLayout-summary > div.SideContent > div.TierBox.Box > div > div.TierRankInfo > div.TierInfo > span.WinLose > span.wins').text
+    win = win[:-1]
+    return render_template('opgg.html', username=username, opgg_url = opgg_url, rank = rank, win = win)
 
 if __name__ == '__main__':
     app.run(debug=True)
